@@ -3,6 +3,8 @@ import { useForm } from "react-hook-form";
 import clsx from "clsx";
 import { match } from "ts-pattern";
 import { RxPencil2 } from "react-icons/rx";
+import { RxCheck } from "react-icons/rx";
+import { RxCross2 } from "react-icons/rx";
 
 type Task = {
   id: number;
@@ -19,6 +21,7 @@ enum TaskStatus {
 function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const formCreate = useForm<{ newTitle: string }>();
+  const formUpdate = useForm<{ updatedTitle: string }>();
 
   const handleCreateTask = (formValue: Task["title"]) => {
     setTasks((prev) => [
@@ -51,13 +54,31 @@ function App() {
     );
   };
 
-  const triggerEditTask = (taskIndex: number) => {
+  const toggleTriggerUpdateTask = (taskIndex: number) => {
     setTasks((prev) =>
       prev.map((task, index) => {
         if (index === taskIndex) {
           return {
             ...task,
-            status: TaskStatus.IN_EDIT,
+            status: match(task.status)
+              .with(TaskStatus.IN_EDIT, () => TaskStatus.NOT_DONE)
+              .otherwise(() => TaskStatus.IN_EDIT),
+          };
+        } else {
+          return task;
+        }
+      })
+    );
+  };
+
+  const handleUpdateTask = (updatedTitle: string, taskIndex: number) => {
+    setTasks((prev) =>
+      prev.map((task, index) => {
+        if (index === taskIndex) {
+          return {
+            ...task,
+            title: updatedTitle,
+            status: TaskStatus.NOT_DONE,
           };
         } else {
           return task;
@@ -98,6 +119,7 @@ function App() {
               className={clsx(
                 "group transition-all border rounded px-4 py-2 h-[49px] flex gap-2 items-center",
                 {
+                  "hover:border-primary": task.status === TaskStatus.NOT_DONE,
                   "opacity-40": task.status === TaskStatus.DONE,
                 }
               )}
@@ -111,7 +133,12 @@ function App() {
               />
 
               {task.status === TaskStatus.IN_EDIT ? (
-                <form>
+                <form
+                  onSubmit={formUpdate.handleSubmit((v) =>
+                    handleUpdateTask(v.updatedTitle, taskIndex)
+                  )}
+                  className="flex gap-2"
+                >
                   <label hidden htmlFor="editTaskTitle">
                     Title
                   </label>
@@ -119,7 +146,11 @@ function App() {
                     className="input input-sm input-bordered border w-full"
                     id="editTaskTitle"
                     defaultValue={task.title}
+                    {...formUpdate.register("updatedTitle", { required: true })}
                   />
+                  <button type="submit" className="hover:text-primary">
+                    <RxCheck />
+                  </button>
                 </form>
               ) : (
                 <span
@@ -133,13 +164,25 @@ function App() {
 
               <div
                 className={clsx(
-                  "ml-auto flex items-center opacity-0 group-hover:opacity-100",
-                  { "opacity-100": task.status === TaskStatus.IN_EDIT }
+                  "ml-auto flex items-center opacity-0 hover:text-primary",
+                  {
+                    "group-hover:opacity-100":
+                      task.status === TaskStatus.NOT_DONE,
+                    "opacity-100": task.status === TaskStatus.IN_EDIT,
+                  }
                 )}
               >
-                <button onClick={() => triggerEditTask(taskIndex)}>
-                  <RxPencil2 />
-                </button>
+                {match(task.status)
+                  .with(TaskStatus.IN_EDIT, () => (
+                    <button onClick={() => toggleTriggerUpdateTask(taskIndex)}>
+                      <RxCross2 />
+                    </button>
+                  ))
+                  .otherwise(() => (
+                    <button onClick={() => toggleTriggerUpdateTask(taskIndex)}>
+                      <RxPencil2 />
+                    </button>
+                  ))}
               </div>
             </li>
           ))}
