@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import clsx from "clsx";
 import { match } from "ts-pattern";
+import { RxPencil2 } from "react-icons/rx";
 
 type Task = {
   id: number;
@@ -12,6 +13,7 @@ type Task = {
 enum TaskStatus {
   DONE = "done",
   NOT_DONE = "notDone",
+  IN_EDIT = "inEdit",
 }
 
 function App() {
@@ -40,7 +42,22 @@ function App() {
             status: match(task.status)
               .with(TaskStatus.DONE, () => TaskStatus.NOT_DONE)
               .with(TaskStatus.NOT_DONE, () => TaskStatus.DONE)
-              .exhaustive(),
+              .run(),
+          };
+        } else {
+          return task;
+        }
+      })
+    );
+  };
+
+  const triggerEditTask = (taskIndex: number) => {
+    setTasks((prev) =>
+      prev.map((task, index) => {
+        if (index === taskIndex) {
+          return {
+            ...task,
+            status: TaskStatus.IN_EDIT,
           };
         } else {
           return task;
@@ -76,29 +93,54 @@ function App() {
 
       {tasks.length > 0 && (
         <ul className="space-y-4">
-          {tasks.map((v, taskIndex) => (
+          {tasks.map((task, taskIndex) => (
             <li
               className={clsx(
-                "transition-all border rounded px-4 py-2 flex gap-2 items-center",
+                "group transition-all border rounded px-4 py-2 h-[49px] flex gap-2 items-center",
                 {
-                  "opacity-40": v.status === TaskStatus.DONE,
+                  "opacity-40": task.status === TaskStatus.DONE,
                 }
               )}
-              key={v.id}
+              key={task.id}
             >
               <button
                 className={clsx("border w-4 h-4 rounded-full", {
-                  "bg-white": v.status === TaskStatus.DONE,
+                  "bg-white": task.status === TaskStatus.DONE,
                 })}
                 onClick={() => handleToggleTask(taskIndex)}
               />
-              <span
-                className={clsx({
-                  "line-through": v.status === TaskStatus.DONE,
-                })}
+
+              {task.status === TaskStatus.IN_EDIT ? (
+                <form>
+                  <label hidden htmlFor="editTaskTitle">
+                    Title
+                  </label>
+                  <input
+                    className="input input-sm input-bordered border w-full"
+                    id="editTaskTitle"
+                    defaultValue={task.title}
+                  />
+                </form>
+              ) : (
+                <span
+                  className={clsx({
+                    "line-through": task.status === TaskStatus.DONE,
+                  })}
+                >
+                  {task.title}
+                </span>
+              )}
+
+              <div
+                className={clsx(
+                  "ml-auto flex items-center opacity-0 group-hover:opacity-100",
+                  { "opacity-100": task.status === TaskStatus.IN_EDIT }
+                )}
               >
-                {v.title}
-              </span>
+                <button onClick={() => triggerEditTask(taskIndex)}>
+                  <RxPencil2 />
+                </button>
+              </div>
             </li>
           ))}
         </ul>
