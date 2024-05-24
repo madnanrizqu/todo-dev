@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import clsx from "clsx";
 import { match } from "ts-pattern";
@@ -105,6 +105,19 @@ function App() {
     setActiveSearchQuery(null);
   };
 
+  useEffect(() => {
+    const queryParams = new URLSearchParams(window.location.search);
+    const queryParamsPrefix = "?";
+
+    if (activeSearchQuery) {
+      queryParams.set("search", activeSearchQuery);
+    } else {
+      queryParams.delete("search");
+    }
+
+    history.pushState(null, "", queryParamsPrefix + queryParams.toString());
+  }, [activeSearchQuery]);
+
   const displayedTasks = activeSearchQuery
     ? tasks.filter(
         (task) => task.title.toLowerCase().search(activeSearchQuery) > -1
@@ -160,14 +173,16 @@ function App() {
                 placeholder="Search Task"
                 {...formSearch.register("searchQuery")}
               />
-              <button
-                className={clsx("opacity-0 hover:text-primary", {
-                  "group-focus-within:opacity-100": activeSearchQuery,
-                })}
-                type="reset"
-              >
-                <RxCross2 />
-              </button>
+              {activeSearchQuery && (
+                <button
+                  className={clsx("opacity-0 hover:text-primary", {
+                    "group-focus-within:opacity-100": activeSearchQuery,
+                  })}
+                  type="reset"
+                >
+                  <RxCross2 />
+                </button>
+              )}
               <button
                 className="opacity-0 group-focus-within:opacity-100 hover:text-primary"
                 type="submit"
@@ -183,7 +198,7 @@ function App() {
             {displayedTasks.map((task, taskIndex) => (
               <li
                 className={clsx(
-                  "group transition-all border rounded px-4 py-2 h-[49px] flex gap-2 items-center",
+                  "group transition-all border border-neutral rounded px-4 py-2 h-[49px] flex gap-2 items-center",
                   {
                     "hover:border-primary": task.status === TaskStatus.NOT_DONE,
                     "opacity-40": task.status === TaskStatus.DONE,
