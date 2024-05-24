@@ -18,19 +18,19 @@ enum TaskStatus {
 
 function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const { register, handleSubmit, reset } = useForm<Task>();
+  const formCreate = useForm<{ newTitle: string }>();
 
-  const handleCreateTask = (formValue: Task) => {
+  const handleCreateTask = (formValue: Task["title"]) => {
     setTasks((prev) => [
       ...prev,
       {
         id: prev.length + 1,
-        title: formValue.title,
+        title: formValue,
         status: TaskStatus.NOT_DONE,
       },
     ]);
 
-    reset();
+    formCreate.reset();
   };
 
   const handleToggleTask = (taskIndex: number) => {
@@ -73,7 +73,7 @@ function App() {
       </header>
 
       <form
-        onSubmit={handleSubmit(handleCreateTask)}
+        onSubmit={formCreate.handleSubmit((v) => handleCreateTask(v.newTitle))}
         className="flex flex-col items-center"
       >
         <div className="space-y-2">
@@ -83,7 +83,7 @@ function App() {
           <input
             className="input input-bordered w-full"
             id="taskTitle"
-            {...register("title", { required: true })}
+            {...formCreate.register("newTitle", { required: true })}
           ></input>
           <button type="submit" className="btn w-full">
             Create Task
