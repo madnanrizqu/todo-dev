@@ -5,6 +5,7 @@ import { match } from "ts-pattern";
 import { RxPencil2 } from "react-icons/rx";
 import { RxCheck } from "react-icons/rx";
 import { RxCross2 } from "react-icons/rx";
+import { RxTrash } from "react-icons/rx";
 
 type Task = {
   id: number;
@@ -87,6 +88,10 @@ function App() {
     );
   };
 
+  const handleDeleteTask = (taskIndex: number) => {
+    setTasks((prev) => prev.filter((_, index) => taskIndex !== index));
+  };
+
   return (
     <main className="container mx-auto space-y-16 py-20 px-8">
       <header>
@@ -163,23 +168,33 @@ function App() {
               )}
 
               <div
-                className={clsx(
-                  "ml-auto flex items-center opacity-0 hover:text-primary",
-                  {
-                    "group-hover:opacity-100":
-                      task.status === TaskStatus.NOT_DONE,
-                    "opacity-100": task.status === TaskStatus.IN_EDIT,
-                  }
-                )}
+                className={clsx("ml-auto flex items-center gap-2 opacity-0", {
+                  "group-hover:opacity-100":
+                    task.status === TaskStatus.NOT_DONE,
+                  "opacity-100": task.status === TaskStatus.IN_EDIT,
+                })}
               >
+                <button
+                  className="hover:text-primary"
+                  onClick={() => handleDeleteTask(taskIndex)}
+                >
+                  <RxTrash />
+                </button>
+
                 {match(task.status)
                   .with(TaskStatus.IN_EDIT, () => (
-                    <button onClick={() => toggleTriggerUpdateTask(taskIndex)}>
+                    <button
+                      className="hover:text-primary"
+                      onClick={() => toggleTriggerUpdateTask(taskIndex)}
+                    >
                       <RxCross2 />
                     </button>
                   ))
                   .otherwise(() => (
-                    <button onClick={() => toggleTriggerUpdateTask(taskIndex)}>
+                    <button
+                      className="hover:text-primary"
+                      onClick={() => toggleTriggerUpdateTask(taskIndex)}
+                    >
                       <RxPencil2 />
                     </button>
                   ))}
