@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import clsx from "clsx";
-import { match } from "ts-pattern";
+import { P, match } from "ts-pattern";
 import { RxMagnifyingGlass, RxPencil2 } from "react-icons/rx";
 import { RxCheck } from "react-icons/rx";
 import { RxCross2 } from "react-icons/rx";
 import { RxTrash } from "react-icons/rx";
+import { useIsFirstRender } from "./hooks/render";
 
 type Task = {
   id: number;
@@ -20,7 +21,21 @@ enum TaskStatus {
 }
 
 function App() {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([
+    {
+      id: 1,
+      title: "Task 1",
+      status: TaskStatus.NOT_DONE,
+    },
+    {
+      id: 2,
+      title: "Adnan",
+      status: TaskStatus.NOT_DONE,
+    },
+  ]);
+
+  const isFirstRender = useIsFirstRender();
+
   const [activeSearchQuery, setActiveSearchQuery] = useState<string | null>(
     null
   );
@@ -106,16 +121,28 @@ function App() {
   };
 
   useEffect(() => {
+    // to sync state with query params
+
     const queryParams = new URLSearchParams(window.location.search);
+    const queryParamsSearch = queryParams.get("search");
     const queryParamsPrefix = "?";
 
-    if (activeSearchQuery) {
-      queryParams.set("search", activeSearchQuery);
-    } else {
-      queryParams.delete("search");
-    }
-
-    history.pushState(null, "", queryParamsPrefix + queryParams.toString());
+    match([queryParamsSearch, activeSearchQuery])
+      .with([P._, P.string], () => {
+        queryParams.set("search", activeSearchQuery as string);
+        history.pushState(null, "", queryParamsPrefix + queryParams.toString());
+      })
+      .with([P.string, P.nullish], () => {
+        if (isFirstRender) {
+          setActiveSearchQuery(queryParams.get("search"));
+        } else {
+          history.pushState(null, "", "?search=");
+        }
+      })
+      .with([P.nullish, P.nullish], () => {
+        history.pushState(null, "", "?search=");
+      })
+      .exhaustive();
   }, [activeSearchQuery]);
 
   const displayedTasks = activeSearchQuery
@@ -171,6 +198,7 @@ function App() {
                 type="text"
                 className="grow"
                 placeholder="Search Task"
+                defaultValue={activeSearchQuery ?? ""}
                 {...formSearch.register("searchQuery")}
               />
               {activeSearchQuery && (
