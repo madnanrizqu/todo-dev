@@ -7,6 +7,7 @@ import { RxCheck } from "react-icons/rx";
 import { RxCross2 } from "react-icons/rx";
 import { RxTrash } from "react-icons/rx";
 import { useIsFirstRender } from "./hooks/render";
+import { useLocalStorageState } from "./hooks/storage";
 
 type Task = {
   id: number;
@@ -21,18 +22,7 @@ enum TaskStatus {
 }
 
 function App() {
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: 1,
-      title: "Task 1",
-      status: TaskStatus.NOT_DONE,
-    },
-    {
-      id: 2,
-      title: "Adnan",
-      status: TaskStatus.NOT_DONE,
-    },
-  ]);
+  const [tasks, setTasks] = useLocalStorageState<Task[]>("app.tasks", []);
 
   const isFirstRender = useIsFirstRender();
 
