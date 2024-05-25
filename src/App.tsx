@@ -2,20 +2,20 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import clsx from "clsx";
 import { P, match } from "ts-pattern";
-import { RxMagnifyingGlass, RxPencil2 } from "react-icons/rx";
+import { RxMagnifyingGlass } from "react-icons/rx";
 import { RxCheck } from "react-icons/rx";
 import { RxCross2 } from "react-icons/rx";
-import { RxTrash } from "react-icons/rx";
 import { useIsFirstRender } from "./hooks/render";
 import { useLocalStorageState } from "./hooks/storage";
+import { Task as TaskComponent, mapStringToVariant } from "./components/Task";
 
-type Task = {
+export type Task = {
   id: number;
   title: string;
   status: TaskStatus;
 };
 
-enum TaskStatus {
+export enum TaskStatus {
   DONE = "done",
   NOT_DONE = "notDone",
   IN_EDIT = "inEdit",
@@ -31,7 +31,6 @@ function App() {
   );
 
   const formCreate = useForm<{ newTitle: string }>();
-  const formUpdate = useForm<{ updatedTitle: string }>();
   const formSearch = useForm<{ searchQuery: string }>();
 
   const handleCreateTask = (formValue: Task["title"]) => {
@@ -214,88 +213,22 @@ function App() {
 
           <ul className="space-y-4">
             {displayedTasks.map((task, taskIndex) => (
-              <li
-                className={clsx(
-                  "group transition-all border border-neutral rounded px-4 py-2 h-[49px] flex gap-2 items-center",
-                  {
-                    "hover:border-primary": task.status === TaskStatus.NOT_DONE,
-                    "opacity-40": task.status === TaskStatus.DONE,
-                  }
-                )}
+              <TaskComponent
                 key={task.id}
-              >
-                <button
-                  className={clsx("border w-4 h-4 rounded-full", {
-                    "bg-white": task.status === TaskStatus.DONE,
-                  })}
-                  onClick={() => handleToggleTask(taskIndex)}
-                />
-
-                {task.status === TaskStatus.IN_EDIT ? (
-                  <form
-                    onSubmit={formUpdate.handleSubmit((v) =>
-                      handleUpdateTask(v.updatedTitle, taskIndex)
-                    )}
-                    className="flex gap-2"
-                  >
-                    <label hidden htmlFor="editTaskTitle">
-                      Title
-                    </label>
-                    <input
-                      className="input input-sm input-bordered border w-full"
-                      id="editTaskTitle"
-                      defaultValue={task.title}
-                      {...formUpdate.register("updatedTitle", {
-                        required: true,
-                      })}
-                    />
-                    <button type="submit" className="hover:text-primary">
-                      <RxCheck />
-                    </button>
-                  </form>
-                ) : (
-                  <span
-                    className={clsx({
-                      "line-through": task.status === TaskStatus.DONE,
-                    })}
-                  >
-                    {task.title}
-                  </span>
+                variant={mapStringToVariant(
+                  match(task.status)
+                    .with(TaskStatus.DONE, () => "done")
+                    .with(TaskStatus.NOT_DONE, () => "notDone")
+                    .with(TaskStatus.IN_EDIT, () => "inEdit")
+                    .otherwise(() => "notDone")
                 )}
-
-                <div
-                  className={clsx("ml-auto flex items-center gap-2 opacity-0", {
-                    "group-hover:opacity-100":
-                      task.status === TaskStatus.NOT_DONE,
-                    "opacity-100": task.status === TaskStatus.IN_EDIT,
-                  })}
-                >
-                  <button
-                    className="hover:text-primary"
-                    onClick={() => handleDeleteTask(taskIndex)}
-                  >
-                    <RxTrash />
-                  </button>
-
-                  {match(task.status)
-                    .with(TaskStatus.IN_EDIT, () => (
-                      <button
-                        className="hover:text-primary"
-                        onClick={() => toggleTriggerUpdateTask(taskIndex)}
-                      >
-                        <RxCross2 />
-                      </button>
-                    ))
-                    .otherwise(() => (
-                      <button
-                        className="hover:text-primary"
-                        onClick={() => toggleTriggerUpdateTask(taskIndex)}
-                      >
-                        <RxPencil2 />
-                      </button>
-                    ))}
-                </div>
-              </li>
+                onClickToggle={() => handleToggleTask(taskIndex)}
+                title={task.title}
+                onClickTriggerEdit={() => toggleTriggerUpdateTask(taskIndex)}
+                onClickCancelEdit={() => toggleTriggerUpdateTask(taskIndex)}
+                onClickDelete={() => handleDeleteTask(taskIndex)}
+                onSubmitEdit={(value) => handleUpdateTask(value, taskIndex)}
+              />
             ))}
           </ul>
         </div>
