@@ -27,10 +27,12 @@ export const Task = (props: Props) => {
       <form
         onSubmit={form.handleSubmit((v) => props.onSubmitEdit?.(v.newValue))}
         className={clsx("flex gap-2", {
-          hidden: props.variant === "done" || props.variant === "notDone",
+          "opacity-0": props.variant === "done" || props.variant === "notDone",
+          "h-0": props.variant === "done" || props.variant === "notDone",
+          "w-0": props.variant === "done" || props.variant === "notDone",
         })}
       >
-        <label hidden htmlFor="editTaskTitle">
+        <label hidden htmlFor={`${props.id}-input`}>
           Title
         </label>
         <input
@@ -38,7 +40,7 @@ export const Task = (props: Props) => {
             .with(P.union("inCreate", "inEdit"), () => 0)
             .otherwise(() => -1)}
           className="input input-sm input-bordered border w-full"
-          id="editTaskTitle"
+          id={`${props.id}-input`}
           defaultValue={props.title}
           {...form.register("newValue", {
             required: true,
@@ -98,7 +100,10 @@ export const Task = (props: Props) => {
           .otherwise(() => (
             <button
               className="hover:text-primary"
-              onClick={props.onClickTriggerEdit}
+              onClick={() => {
+                props.onClickTriggerEdit?.();
+                form.setFocus("newValue");
+              }}
             >
               <RxPencil2 />
             </button>

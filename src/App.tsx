@@ -374,6 +374,7 @@ function App() {
             {displayedTasks.map((task) => (
               <li>
                 <TaskComponent
+                  id={task.id}
                   key={task.id}
                   title={task.title}
                   variant={mapStringToVariant(
@@ -396,6 +397,7 @@ function App() {
                     <li>
                       {task.subTasks.map((subTask) => (
                         <TaskComponent
+                          id={subTask.id}
                           key={subTask.id}
                           title={subTask.title}
                           variant={mapStringToVariant(
@@ -422,8 +424,9 @@ function App() {
                       ))}
                     </li>
                     {parentTaskIdForCreate === task.id && (
-                      <li key={`task-${task.id}-sub-task-form`}>
+                      <li key={`task-sub-task-form`}>
                         <TaskComponent
+                          id="task-sub-task-form"
                           variant="inCreate"
                           onSubmitEdit={handleCreateTask}
                           onClickCancelEdit={onCancelCreateSubTask}

@@ -3,6 +3,7 @@ import { match } from "ts-pattern";
 export type Form = { newValue: string };
 
 export type Props = {
+  id: string;
   variant: Variant;
   className?: string;
   title?: string;
