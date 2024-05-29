@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import clsx from "clsx";
 import { P, match } from "ts-pattern";
@@ -274,16 +274,18 @@ function App() {
       .exhaustive();
   }, [activeSearchQuery]);
 
-  const displayedTasks = activeSearchQuery
-    ? tasks.filter((task) => {
-        return (
-          task.title.toLowerCase().search(activeSearchQuery) > -1 ||
-          (task.subTasks?.findIndex((subTask) => {
-            return subTask.title.toLowerCase().search(activeSearchQuery) > -1;
-          }) ?? -1) > -1
-        );
-      })
-    : tasks;
+  const displayedTasks = useMemo(() => {
+    return activeSearchQuery
+      ? tasks.filter((task) => {
+          return (
+            task.title.toLowerCase().search(activeSearchQuery) > -1 ||
+            (task.subTasks?.findIndex((subTask) => {
+              return subTask.title.toLowerCase().search(activeSearchQuery) > -1;
+            }) ?? -1) > -1
+          );
+        })
+      : tasks;
+  }, [activeSearchQuery]);
 
   return (
     <main className="container mx-auto space-y-16 py-20 px-8">
