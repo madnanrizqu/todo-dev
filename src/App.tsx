@@ -302,7 +302,7 @@ function App() {
     : tasks;
 
   return (
-    <main className="container mx-auto space-y-16 py-20 px-8">
+    <main className="container mx-auto space-y-16 py-20 px-8 lg:px-64">
       <header>
         <h1 className="text-5xl text-center">Todo.dev</h1>
       </header>
