@@ -24,42 +24,55 @@ export const Task = (props: Props) => {
         onClick={props.onClickToggle}
       />
 
-      {props.variant === "inEdit" || props.variant === "inCreate" ? (
-        <form
-          onSubmit={form.handleSubmit((v) => props.onSubmitEdit?.(v.newValue))}
-          className="flex gap-2"
-        >
-          <label hidden htmlFor="editTaskTitle">
-            Title
-          </label>
-          <input
-            className="input input-sm input-bordered border w-full"
-            id="editTaskTitle"
-            defaultValue={props.title}
-            {...form.register("newValue", {
-              required: true,
-            })}
-          />
-          <button type="submit" className="hover:text-primary">
-            <RxCheck />
-          </button>
-        </form>
-      ) : (
-        <span
-          className={clsx({
-            "line-through": props.variant === "done",
+      <form
+        onSubmit={form.handleSubmit((v) => props.onSubmitEdit?.(v.newValue))}
+        className={clsx("flex gap-2", {
+          hidden: props.variant === "done" || props.variant === "notDone",
+        })}
+      >
+        <label hidden htmlFor="editTaskTitle">
+          Title
+        </label>
+        <input
+          tabIndex={match(props.variant)
+            .with(P.union("inCreate", "inEdit"), () => 0)
+            .otherwise(() => -1)}
+          className="input input-sm input-bordered border w-full"
+          id="editTaskTitle"
+          defaultValue={props.title}
+          {...form.register("newValue", {
+            required: true,
           })}
+        />
+        <button
+          tabIndex={match(props.variant)
+            .with(P.union("inCreate", "inEdit"), () => 0)
+            .otherwise(() => -1)}
+          type="submit"
+          className="hover:text-primary"
         >
-          {props.title}
-        </span>
-      )}
+          <RxCheck />
+        </button>
+      </form>
+
+      <span
+        className={clsx({
+          "line-through": props.variant === "done",
+          hidden: props.variant === "inEdit" || props.variant === "inCreate",
+        })}
+      >
+        {props.title}
+      </span>
 
       <div
-        className={clsx("ml-auto flex items-center gap-2 opacity-0", {
-          "group-hover:opacity-100": props.variant === "notDone",
-          "opacity-100":
-            props.variant === "inEdit" || props.variant === "inCreate",
-        })}
+        className={clsx(
+          "ml-auto flex items-center gap-2 opacity-0 focus-within:opacity-100",
+          {
+            "group-hover:opacity-100": props.variant === "notDone",
+            "opacity-100":
+              props.variant === "inEdit" || props.variant === "inCreate",
+          }
+        )}
       >
         {props.variant !== "inCreate" && (
           <button className="hover:text-primary" onClick={props.onClickDelete}>
