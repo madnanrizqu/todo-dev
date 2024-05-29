@@ -394,8 +394,8 @@ function App() {
                 />
                 {task.subTasks?.length ? (
                   <ul className="ml-10">
-                    <li>
-                      {task.subTasks.map((subTask) => (
+                    {task.subTasks.map((subTask) => (
+                      <li>
                         <TaskComponent
                           id={subTask.id}
                           key={subTask.id}
@@ -421,8 +421,8 @@ function App() {
                             handleDeleteTask(subTask.id, task.id)
                           }
                         />
-                      ))}
-                    </li>
+                      </li>
+                    ))}
                     {parentTaskIdForCreate === task.id && (
                       <li key={`task-sub-task-form`}>
                         <TaskComponent
