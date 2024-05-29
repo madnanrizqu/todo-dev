@@ -71,9 +71,14 @@ function App() {
   const formSearch = useForm<{ searchQuery: string }>();
 
   const onCreateSubTask = (parentTaskId: string) => {
-    console.log("parentTaskId", parentTaskId);
-
     setParentTaskIdForCreate(parentTaskId);
+
+    const el = document.getElementById(
+      `task-${parentTaskId}-sub-task-form-input`
+    );
+    console.log("el", el);
+
+    el?.focus();
   };
 
   const onCancelCreateSubTask = () => {
@@ -427,7 +432,9 @@ function App() {
 
                   <li
                     className={clsx({
-                      hidden: parentTaskIdForCreate !== task.id,
+                      "opacity-0": parentTaskIdForCreate !== task.id,
+                      "h-0": parentTaskIdForCreate !== task.id,
+                      "w-0": parentTaskIdForCreate !== task.id,
                     })}
                     key={`task-${task.id}-sub-task-form`}
                   >
