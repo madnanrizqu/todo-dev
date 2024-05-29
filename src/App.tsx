@@ -8,6 +8,7 @@ import { RxCross2 } from "react-icons/rx";
 import { useIsFirstRender } from "./hooks/render";
 import { useLocalStorageState } from "./hooks/storage";
 import { Task as TaskComponent, mapStringToVariant } from "./components/Task";
+import { v4 as uuidv4 } from "uuid";
 
 export type Task = {
   id: number;
@@ -25,29 +26,29 @@ export enum TaskStatus {
 function App() {
   const [tasks, setTasks] = useLocalStorageState<Task[]>("app.tasks", [
     {
-      id: 1,
+      id: uuidv4(),
       title: "Todo.dev",
       status: TaskStatus.NOT_DONE,
       subTasks: [
         {
-          id: 2,
+          id: uuidv4(),
           title: "child task",
           status: TaskStatus.NOT_DONE,
         },
         {
-          id: 3,
+          id: uuidv4(),
           title: "keyboard accessibility",
           status: TaskStatus.NOT_DONE,
         },
         {
-          id: 4,
+          id: uuidv4(),
           title: "command pallete",
           status: TaskStatus.NOT_DONE,
         },
       ],
     },
     {
-      id: 5,
+      id: uuidv4(),
       title: "think 5k project",
       status: TaskStatus.NOT_DONE,
     },
@@ -82,14 +83,14 @@ function App() {
                   ? [
                       ...task.subTasks,
                       {
-                        id: prev.length + 1,
+                        id: uuidv4(),
                         title: formValue,
                         status: TaskStatus.NOT_DONE,
                       },
                     ]
                   : [
                       {
-                        id: prev.length + 1,
+                        id: uuidv4(),
                         title: formValue,
                         status: TaskStatus.NOT_DONE,
                       },
@@ -105,7 +106,7 @@ function App() {
       setTasks((prev) => [
         ...prev,
         {
-          id: prev.length + 1,
+          id: uuidv4(),
           title: formValue,
           status: TaskStatus.NOT_DONE,
         },
