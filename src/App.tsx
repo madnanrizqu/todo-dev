@@ -71,6 +71,8 @@ function App() {
   const formSearch = useForm<{ searchQuery: string }>();
 
   const onCreateSubTask = (parentTaskId: string) => {
+    console.log("parentTaskId", parentTaskId);
+
     setParentTaskIdForCreate(parentTaskId);
   };
 
@@ -392,49 +394,48 @@ function App() {
                   hasAddBtn
                   onClickAdd={() => onCreateSubTask(task.id)}
                 />
-                {task.subTasks?.length ? (
-                  <ul className="ml-10">
-                    {task.subTasks.map((subTask) => (
-                      <li>
-                        <TaskComponent
-                          id={subTask.id}
-                          key={subTask.id}
-                          title={subTask.title}
-                          variant={mapStringToVariant(
-                            match(subTask.status)
-                              .with(TaskStatus.DONE, () => "done")
-                              .with(TaskStatus.NOT_DONE, () => "notDone")
-                              .with(TaskStatus.IN_EDIT, () => "inEdit")
-                              .otherwise(() => "notDone")
-                          )}
-                          onClickTriggerEdit={() =>
-                            toggleTriggerUpdateTask(subTask.id, task.id)
-                          }
-                          onClickCancelEdit={() =>
-                            toggleTriggerUpdateTask(subTask.id, task.id)
-                          }
-                          onSubmitEdit={(value) =>
-                            handleUpdateTask(value, subTask.id, task.id)
-                          }
-                          onClickToggle={() => handleToggleTask(subTask.id)}
-                          onClickDelete={() =>
-                            handleDeleteTask(subTask.id, task.id)
-                          }
-                        />
-                      </li>
-                    ))}
-                    {parentTaskIdForCreate === task.id && (
-                      <li key={`task-sub-task-form`}>
-                        <TaskComponent
-                          id="task-sub-task-form"
-                          variant="inCreate"
-                          onSubmitEdit={handleCreateTask}
-                          onClickCancelEdit={onCancelCreateSubTask}
-                        />
-                      </li>
-                    )}
-                  </ul>
-                ) : null}
+                <ul className="ml-10">
+                  {task?.subTasks?.map((subTask) => (
+                    <li>
+                      <TaskComponent
+                        id={subTask.id}
+                        key={subTask.id}
+                        title={subTask.title}
+                        variant={mapStringToVariant(
+                          match(subTask.status)
+                            .with(TaskStatus.DONE, () => "done")
+                            .with(TaskStatus.NOT_DONE, () => "notDone")
+                            .with(TaskStatus.IN_EDIT, () => "inEdit")
+                            .otherwise(() => "notDone")
+                        )}
+                        onClickTriggerEdit={() =>
+                          toggleTriggerUpdateTask(subTask.id, task.id)
+                        }
+                        onClickCancelEdit={() =>
+                          toggleTriggerUpdateTask(subTask.id, task.id)
+                        }
+                        onSubmitEdit={(value) =>
+                          handleUpdateTask(value, subTask.id, task.id)
+                        }
+                        onClickToggle={() => handleToggleTask(subTask.id)}
+                        onClickDelete={() =>
+                          handleDeleteTask(subTask.id, task.id)
+                        }
+                      />
+                    </li>
+                  ))}
+
+                  {parentTaskIdForCreate === task.id && (
+                    <li key={`task-${task.id}-sub-task-form`}>
+                      <TaskComponent
+                        id={`task-${task.id}-sub-task-form`}
+                        variant="inCreate"
+                        onSubmitEdit={handleCreateTask}
+                        onClickCancelEdit={onCancelCreateSubTask}
+                      />
+                    </li>
+                  )}
+                </ul>
               </li>
             ))}
           </ul>
