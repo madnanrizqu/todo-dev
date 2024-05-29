@@ -11,7 +11,7 @@ import { Task as TaskComponent, mapStringToVariant } from "./components/Task";
 import { v4 as uuidv4 } from "uuid";
 
 export type Task = {
-  id: number;
+  id: string;
   title: string;
   status: TaskStatus;
   subTasks?: Task[];
@@ -62,11 +62,11 @@ function App() {
 
   const formCreate = useForm<{
     newTitle: string;
-    parentTaskId: number | null;
+    parentTaskId: string | null;
   }>();
   const formSearch = useForm<{ searchQuery: string }>();
 
-  const handleCreateSubTask = (parentTaskId: number) => {
+  const handleCreateSubTask = (parentTaskId: string) => {
     formCreate.setFocus("newTitle");
     formCreate.setValue("parentTaskId", parentTaskId);
   };
@@ -116,7 +116,7 @@ function App() {
     formCreate.setValue("newTitle", "");
   };
 
-  const handleToggleTask = (taskId: number) => {
+  const handleToggleTask = (taskId: string) => {
     const toggleTaskStatus = (task: Task): Task => {
       if (task.subTasks) {
         task.subTasks = [...task.subTasks.map(toggleTaskStatus)];
@@ -138,7 +138,7 @@ function App() {
     setTasks((prev) => prev.map(toggleTaskStatus));
   };
 
-  const toggleTriggerUpdateTask = (taskId: number, parentId?: number) => {
+  const toggleTriggerUpdateTask = (taskId: string, parentId?: string) => {
     setTasks((prev) => {
       if (parentId) {
         return prev.map((task) => {
@@ -181,8 +181,8 @@ function App() {
 
   const handleUpdateTask = (
     updatedTitle: string,
-    taskId: number,
-    parentId?: number
+    taskId: string,
+    parentId?: string
   ) => {
     setTasks((prev) => {
       if (parentId) {
@@ -222,7 +222,7 @@ function App() {
     });
   };
 
-  const handleDeleteTask = (taskId: number, parentId?: number) => {
+  const handleDeleteTask = (taskId: string, parentId?: string) => {
     if (parentId) {
       setTasks((prev) =>
         prev.map((v) => {
@@ -275,9 +275,14 @@ function App() {
   }, [activeSearchQuery]);
 
   const displayedTasks = activeSearchQuery
-    ? tasks.filter(
-        (task) => task.title.toLowerCase().search(activeSearchQuery) > -1
-      )
+    ? tasks.filter((task) => {
+        return (
+          task.title.toLowerCase().search(activeSearchQuery) > -1 ||
+          (task.subTasks?.findIndex((subTask) => {
+            return subTask.title.toLowerCase().search(activeSearchQuery) > -1;
+          }) ?? -1) > -1
+        );
+      })
     : tasks;
 
   return (
