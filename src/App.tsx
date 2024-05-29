@@ -13,6 +13,7 @@ export type Task = {
   id: number;
   title: string;
   status: TaskStatus;
+  subTasks?: Task[];
 };
 
 export enum TaskStatus {
@@ -22,7 +23,35 @@ export enum TaskStatus {
 }
 
 function App() {
-  const [tasks, setTasks] = useLocalStorageState<Task[]>("app.tasks", []);
+  const [tasks, setTasks] = useLocalStorageState<Task[]>("app.tasks", [
+    {
+      id: 1,
+      title: "Todo.dev",
+      status: TaskStatus.NOT_DONE,
+      subTasks: [
+        {
+          id: 2,
+          title: "child task",
+          status: TaskStatus.NOT_DONE,
+        },
+        {
+          id: 3,
+          title: "keyboard accessibility",
+          status: TaskStatus.NOT_DONE,
+        },
+        {
+          id: 4,
+          title: "command pallete",
+          status: TaskStatus.NOT_DONE,
+        },
+      ],
+    },
+    {
+      id: 5,
+      title: "think 5k project",
+      status: TaskStatus.NOT_DONE,
+    },
+  ]);
 
   const isFirstRender = useIsFirstRender();
 
@@ -30,75 +59,185 @@ function App() {
     null
   );
 
-  const formCreate = useForm<{ newTitle: string }>();
+  const formCreate = useForm<{
+    newTitle: string;
+    parentTaskId: number | null;
+  }>();
   const formSearch = useForm<{ searchQuery: string }>();
 
+  const handleCreateSubTask = (parentTaskId: number) => {
+    formCreate.setFocus("newTitle");
+    formCreate.setValue("parentTaskId", parentTaskId);
+  };
+
   const handleCreateTask = (formValue: Task["title"]) => {
-    setTasks((prev) => [
-      ...prev,
-      {
-        id: prev.length + 1,
-        title: formValue,
-        status: TaskStatus.NOT_DONE,
-      },
-    ]);
+    if (formCreate.watch("parentTaskId")) {
+      setTasks((prev) => {
+        return prev.map((task) => {
+          if (task.id === formCreate.watch("parentTaskId")) {
+            return {
+              ...task,
+              subTasks: [
+                ...(task?.subTasks?.length
+                  ? [
+                      ...task.subTasks,
+                      {
+                        id: prev.length + 1,
+                        title: formValue,
+                        status: TaskStatus.NOT_DONE,
+                      },
+                    ]
+                  : [
+                      {
+                        id: prev.length + 1,
+                        title: formValue,
+                        status: TaskStatus.NOT_DONE,
+                      },
+                    ]),
+              ],
+            };
+          } else {
+            return task;
+          }
+        });
+      });
+    } else {
+      setTasks((prev) => [
+        ...prev,
+        {
+          id: prev.length + 1,
+          title: formValue,
+          status: TaskStatus.NOT_DONE,
+        },
+      ]);
+    }
 
-    formCreate.reset();
+    formCreate.setValue("newTitle", "");
   };
 
-  const handleToggleTask = (taskIndex: number) => {
-    setTasks((prev) =>
-      prev.map((task, index) => {
-        if (index === taskIndex) {
-          return {
-            ...task,
-            status: match(task.status)
-              .with(TaskStatus.DONE, () => TaskStatus.NOT_DONE)
-              .with(TaskStatus.NOT_DONE, () => TaskStatus.DONE)
-              .run(),
-          };
-        } else {
-          return task;
-        }
-      })
-    );
+  const handleToggleTask = (taskId: number) => {
+    const toggleTaskStatus = (task: Task): Task => {
+      if (task.subTasks) {
+        task.subTasks = [...task.subTasks.map(toggleTaskStatus)];
+      }
+
+      if (task.id === taskId) {
+        return {
+          ...task,
+          status: match(task.status)
+            .with(TaskStatus.DONE, () => TaskStatus.NOT_DONE)
+            .with(TaskStatus.NOT_DONE, () => TaskStatus.DONE)
+            .run(),
+        };
+      } else {
+        return task;
+      }
+    };
+
+    setTasks((prev) => prev.map(toggleTaskStatus));
   };
 
-  const toggleTriggerUpdateTask = (taskIndex: number) => {
-    setTasks((prev) =>
-      prev.map((task, index) => {
-        if (index === taskIndex) {
-          return {
-            ...task,
-            status: match(task.status)
-              .with(TaskStatus.IN_EDIT, () => TaskStatus.NOT_DONE)
-              .otherwise(() => TaskStatus.IN_EDIT),
-          };
-        } else {
-          return task;
-        }
-      })
-    );
+  const toggleTriggerUpdateTask = (taskId: number, parentId?: number) => {
+    setTasks((prev) => {
+      if (parentId) {
+        return prev.map((task) => {
+          if (task.id === parentId) {
+            return {
+              ...task,
+              subTasks: task.subTasks?.map((v) => {
+                if (v.id === taskId) {
+                  return {
+                    ...v,
+                    status: match(v.status)
+                      .with(TaskStatus.IN_EDIT, () => TaskStatus.NOT_DONE)
+                      .otherwise(() => TaskStatus.IN_EDIT),
+                  };
+                } else {
+                  return v;
+                }
+              }),
+            };
+          } else {
+            return task;
+          }
+        });
+      } else {
+        return prev.map((task) => {
+          if (task.id === taskId) {
+            return {
+              ...task,
+              status: match(task.status)
+                .with(TaskStatus.IN_EDIT, () => TaskStatus.NOT_DONE)
+                .otherwise(() => TaskStatus.IN_EDIT),
+            };
+          } else {
+            return task;
+          }
+        });
+      }
+    });
   };
 
-  const handleUpdateTask = (updatedTitle: string, taskIndex: number) => {
-    setTasks((prev) =>
-      prev.map((task, index) => {
-        if (index === taskIndex) {
-          return {
-            ...task,
-            title: updatedTitle,
-            status: TaskStatus.NOT_DONE,
-          };
-        } else {
-          return task;
-        }
-      })
-    );
+  const handleUpdateTask = (
+    updatedTitle: string,
+    taskId: number,
+    parentId?: number
+  ) => {
+    setTasks((prev) => {
+      if (parentId) {
+        return prev.map((task) => {
+          if (task.id === parentId) {
+            return {
+              ...task,
+              subTasks: task.subTasks?.map((v) => {
+                if (v.id === taskId) {
+                  return {
+                    ...v,
+                    title: updatedTitle,
+                    status: TaskStatus.NOT_DONE,
+                  };
+                } else {
+                  return v;
+                }
+              }),
+            };
+          } else {
+            return task;
+          }
+        });
+      } else {
+        return prev.map((task) => {
+          if (task.id === taskId) {
+            return {
+              ...task,
+              title: updatedTitle,
+              status: TaskStatus.NOT_DONE,
+            };
+          } else {
+            return task;
+          }
+        });
+      }
+    });
   };
 
-  const handleDeleteTask = (taskIndex: number) => {
-    setTasks((prev) => prev.filter((_, index) => taskIndex !== index));
+  const handleDeleteTask = (taskId: number, parentId?: number) => {
+    if (parentId) {
+      setTasks((prev) =>
+        prev.map((v) => {
+          if (v.id === parentId) {
+            return {
+              ...v,
+              subTasks: v.subTasks?.filter((s) => s.id !== taskId),
+            };
+          } else {
+            return v;
+          }
+        })
+      );
+    } else {
+      setTasks((prev) => prev.filter((v) => v.id !== taskId));
+    }
   };
 
   const handleSearchTask = (searchQuery: string) => {
@@ -156,10 +295,15 @@ function App() {
         >
           <input
             id="newTitle"
-            {...formCreate.register("newTitle", { required: true })}
             type="text"
             className="grow"
             placeholder="Create New Task"
+            {...formCreate.register("newTitle", {
+              required: true,
+              onBlur: () => {
+                formCreate.reset();
+              },
+            })}
           />
           <button
             className="opacity-0 group-focus-within:opacity-100 hover:text-primary"
@@ -212,23 +356,59 @@ function App() {
           <div className="divider"></div>
 
           <ul className="space-y-4">
-            {displayedTasks.map((task, taskIndex) => (
-              <TaskComponent
-                key={task.id}
-                variant={mapStringToVariant(
-                  match(task.status)
-                    .with(TaskStatus.DONE, () => "done")
-                    .with(TaskStatus.NOT_DONE, () => "notDone")
-                    .with(TaskStatus.IN_EDIT, () => "inEdit")
-                    .otherwise(() => "notDone")
-                )}
-                onClickToggle={() => handleToggleTask(taskIndex)}
-                title={task.title}
-                onClickTriggerEdit={() => toggleTriggerUpdateTask(taskIndex)}
-                onClickCancelEdit={() => toggleTriggerUpdateTask(taskIndex)}
-                onClickDelete={() => handleDeleteTask(taskIndex)}
-                onSubmitEdit={(value) => handleUpdateTask(value, taskIndex)}
-              />
+            {displayedTasks.map((task) => (
+              <li>
+                <TaskComponent
+                  key={task.id}
+                  title={task.title}
+                  variant={mapStringToVariant(
+                    match(task.status)
+                      .with(TaskStatus.DONE, () => "done")
+                      .with(TaskStatus.NOT_DONE, () => "notDone")
+                      .with(TaskStatus.IN_EDIT, () => "inEdit")
+                      .otherwise(() => "notDone")
+                  )}
+                  onClickToggle={() => handleToggleTask(task.id)}
+                  onClickTriggerEdit={() => toggleTriggerUpdateTask(task.id)}
+                  onClickCancelEdit={() => toggleTriggerUpdateTask(task.id)}
+                  onSubmitEdit={(value) => handleUpdateTask(value, task.id)}
+                  onClickDelete={() => handleDeleteTask(task.id)}
+                  hasAddBtn
+                  onClickAdd={() => handleCreateSubTask(task.id)}
+                />
+                {task.subTasks?.length ? (
+                  <ul className="ml-10">
+                    <li>
+                      {task.subTasks.map((subTask) => (
+                        <TaskComponent
+                          key={subTask.id}
+                          title={subTask.title}
+                          variant={mapStringToVariant(
+                            match(subTask.status)
+                              .with(TaskStatus.DONE, () => "done")
+                              .with(TaskStatus.NOT_DONE, () => "notDone")
+                              .with(TaskStatus.IN_EDIT, () => "inEdit")
+                              .otherwise(() => "notDone")
+                          )}
+                          onClickTriggerEdit={() =>
+                            toggleTriggerUpdateTask(subTask.id, task.id)
+                          }
+                          onClickCancelEdit={() =>
+                            toggleTriggerUpdateTask(subTask.id, task.id)
+                          }
+                          onSubmitEdit={(value) =>
+                            handleUpdateTask(value, subTask.id, task.id)
+                          }
+                          onClickToggle={() => handleToggleTask(subTask.id)}
+                          onClickDelete={() =>
+                            handleDeleteTask(subTask.id, task.id)
+                          }
+                        />
+                      ))}
+                    </li>
+                  </ul>
+                ) : null}
+              </li>
             ))}
           </ul>
         </div>

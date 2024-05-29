@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { useForm } from "react-hook-form";
-import { RxCheck, RxCross2, RxPencil2, RxTrash } from "react-icons/rx";
+import { RxCheck, RxCross2, RxPencil2, RxPlus, RxTrash } from "react-icons/rx";
 import { match } from "ts-pattern";
 import { Form, Props } from "./Task.model";
 
@@ -8,7 +8,7 @@ export const Task = (props: Props) => {
   const form = useForm<Form>();
 
   return (
-    <li
+    <div
       className={clsx(
         "group transition-all border border-neutral rounded px-4 py-2 h-[49px] flex gap-2 items-center",
         {
@@ -57,18 +57,24 @@ export const Task = (props: Props) => {
       <div
         className={clsx("ml-auto flex items-center gap-2 opacity-0", {
           "group-hover:opacity-100": props.variant === "notDone",
-          "opacity-100": props.variant === "done",
+          "opacity-100": props.variant === "inEdit",
         })}
       >
         <button className="hover:text-primary" onClick={props.onClickDelete}>
           <RxTrash />
         </button>
 
+        {props.hasAddBtn && (
+          <button className="hover:text-primary" onClick={props.onClickAdd}>
+            <RxPlus />
+          </button>
+        )}
+
         {match(props.variant)
           .with("inEdit", () => (
             <button
               className="hover:text-primary"
-              onClick={props.onClickTriggerEdit}
+              onClick={props.onClickCancelEdit}
             >
               <RxCross2 />
             </button>
@@ -76,12 +82,12 @@ export const Task = (props: Props) => {
           .otherwise(() => (
             <button
               className="hover:text-primary"
-              onClick={props.onClickCancelEdit}
+              onClick={props.onClickTriggerEdit}
             >
               <RxPencil2 />
             </button>
           ))}
       </div>
-    </li>
+    </div>
   );
 };

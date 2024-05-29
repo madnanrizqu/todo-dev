@@ -3,14 +3,16 @@ import { match } from "ts-pattern";
 export type Form = { newValue: string };
 
 export type Props = {
-  className?: string;
   variant: Variant;
+  className?: string;
   title?: string;
+  hasAddBtn?: boolean;
   onClickToggle?: () => void;
   onSubmitEdit?: (updatedTitle: string) => void;
   onClickDelete?: () => void;
   onClickTriggerEdit?: () => void;
   onClickCancelEdit?: () => void;
+  onClickAdd?: () => void;
 };
 
 type Variant = "done" | "notDone" | "inEdit";
