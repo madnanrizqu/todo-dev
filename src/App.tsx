@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import clsx from "clsx";
 import { P, match } from "ts-pattern";
@@ -62,20 +62,23 @@ function App() {
 
   const formCreate = useForm<{
     newTitle: string;
-    parentTaskId: string | null;
   }>();
+
+  const [parentTaskIdForCreate, setParentTaskIdForCreate] = useState<
+    string | null
+  >(null);
+
   const formSearch = useForm<{ searchQuery: string }>();
 
-  const handleCreateSubTask = (parentTaskId: string) => {
-    formCreate.setFocus("newTitle");
-    formCreate.setValue("parentTaskId", parentTaskId);
+  const onCreateSubTask = (parentTaskId: string) => {
+    setParentTaskIdForCreate(parentTaskId);
   };
 
   const handleCreateTask = (formValue: Task["title"]) => {
-    if (formCreate.watch("parentTaskId")) {
+    if (parentTaskIdForCreate) {
       setTasks((prev) => {
         return prev.map((task) => {
-          if (task.id === formCreate.watch("parentTaskId")) {
+          if (task.id === parentTaskIdForCreate) {
             return {
               ...task,
               subTasks: [
@@ -102,6 +105,8 @@ function App() {
           }
         });
       });
+
+      setParentTaskIdForCreate(null);
     } else {
       setTasks((prev) => [
         ...prev,
@@ -274,18 +279,16 @@ function App() {
       .exhaustive();
   }, [activeSearchQuery]);
 
-  const displayedTasks = useMemo(() => {
-    return activeSearchQuery
-      ? tasks.filter((task) => {
-          return (
-            task.title.toLowerCase().search(activeSearchQuery) > -1 ||
-            (task.subTasks?.findIndex((subTask) => {
-              return subTask.title.toLowerCase().search(activeSearchQuery) > -1;
-            }) ?? -1) > -1
-          );
-        })
-      : tasks;
-  }, [activeSearchQuery]);
+  const displayedTasks = activeSearchQuery
+    ? tasks.filter((task) => {
+        return (
+          task.title.toLowerCase().search(activeSearchQuery) > -1 ||
+          (task.subTasks?.findIndex((subTask) => {
+            return subTask.title.toLowerCase().search(activeSearchQuery) > -1;
+          }) ?? -1) > -1
+        );
+      })
+    : tasks;
 
   return (
     <main className="container mx-auto space-y-16 py-20 px-8">
@@ -382,7 +385,7 @@ function App() {
                   onSubmitEdit={(value) => handleUpdateTask(value, task.id)}
                   onClickDelete={() => handleDeleteTask(task.id)}
                   hasAddBtn
-                  onClickAdd={() => handleCreateSubTask(task.id)}
+                  onClickAdd={() => onCreateSubTask(task.id)}
                 />
                 {task.subTasks?.length ? (
                   <ul className="ml-10">
@@ -414,6 +417,14 @@ function App() {
                         />
                       ))}
                     </li>
+                    {parentTaskIdForCreate === task.id && (
+                      <li key={`task-${task.id}-sub-task-form`}>
+                        <TaskComponent
+                          variant="inEdit"
+                          onSubmitEdit={handleCreateTask}
+                        />
+                      </li>
+                    )}
                   </ul>
                 ) : null}
               </li>
