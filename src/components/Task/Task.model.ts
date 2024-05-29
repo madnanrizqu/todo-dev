@@ -15,7 +15,7 @@ export type Props = {
   onClickAdd?: () => void;
 };
 
-type Variant = "done" | "notDone" | "inEdit";
+type Variant = "done" | "notDone" | "inEdit" | "inCreate";
 
 export const mapStringToVariant = (str: string): Variant => {
   return match(str)

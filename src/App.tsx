@@ -74,6 +74,10 @@ function App() {
     setParentTaskIdForCreate(parentTaskId);
   };
 
+  const onCancelCreateSubTask = () => {
+    setParentTaskIdForCreate(null);
+  };
+
   const handleCreateTask = (formValue: Task["title"]) => {
     if (parentTaskIdForCreate) {
       setTasks((prev) => {
@@ -420,8 +424,9 @@ function App() {
                     {parentTaskIdForCreate === task.id && (
                       <li key={`task-${task.id}-sub-task-form`}>
                         <TaskComponent
-                          variant="inEdit"
+                          variant="inCreate"
                           onSubmitEdit={handleCreateTask}
+                          onClickCancelEdit={onCancelCreateSubTask}
                         />
                       </li>
                     )}

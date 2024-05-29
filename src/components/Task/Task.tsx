@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { useForm } from "react-hook-form";
 import { RxCheck, RxCross2, RxPencil2, RxPlus, RxTrash } from "react-icons/rx";
-import { match } from "ts-pattern";
+import { P, match } from "ts-pattern";
 import { Form, Props } from "./Task.model";
 
 export const Task = (props: Props) => {
@@ -24,7 +24,7 @@ export const Task = (props: Props) => {
         onClick={props.onClickToggle}
       />
 
-      {props.variant === "inEdit" ? (
+      {props.variant === "inEdit" || props.variant === "inCreate" ? (
         <form
           onSubmit={form.handleSubmit((v) => props.onSubmitEdit?.(v.newValue))}
           className="flex gap-2"
@@ -57,12 +57,15 @@ export const Task = (props: Props) => {
       <div
         className={clsx("ml-auto flex items-center gap-2 opacity-0", {
           "group-hover:opacity-100": props.variant === "notDone",
-          "opacity-100": props.variant === "inEdit",
+          "opacity-100":
+            props.variant === "inEdit" || props.variant === "inCreate",
         })}
       >
-        <button className="hover:text-primary" onClick={props.onClickDelete}>
-          <RxTrash />
-        </button>
+        {props.variant !== "inCreate" && (
+          <button className="hover:text-primary" onClick={props.onClickDelete}>
+            <RxTrash />
+          </button>
+        )}
 
         {props.hasAddBtn && (
           <button className="hover:text-primary" onClick={props.onClickAdd}>
@@ -71,7 +74,7 @@ export const Task = (props: Props) => {
         )}
 
         {match(props.variant)
-          .with("inEdit", () => (
+          .with(P.union("inEdit", "inCreate"), () => (
             <button
               className="hover:text-primary"
               onClick={props.onClickCancelEdit}
