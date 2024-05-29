@@ -425,16 +425,19 @@ function App() {
                     </li>
                   ))}
 
-                  {parentTaskIdForCreate === task.id && (
-                    <li key={`task-${task.id}-sub-task-form`}>
-                      <TaskComponent
-                        id={`task-${task.id}-sub-task-form`}
-                        variant="inCreate"
-                        onSubmitEdit={handleCreateTask}
-                        onClickCancelEdit={onCancelCreateSubTask}
-                      />
-                    </li>
-                  )}
+                  <li
+                    className={clsx({
+                      hidden: parentTaskIdForCreate !== task.id,
+                    })}
+                    key={`task-${task.id}-sub-task-form`}
+                  >
+                    <TaskComponent
+                      id={`task-${task.id}-sub-task-form`}
+                      variant="inCreate"
+                      onSubmitEdit={handleCreateTask}
+                      onClickCancelEdit={onCancelCreateSubTask}
+                    />
+                  </li>
                 </ul>
               </li>
             ))}
