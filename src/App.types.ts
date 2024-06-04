@@ -2,6 +2,7 @@ export interface PageState {
   tasks: Task[];
   parentTaskIdForCreate: string | null;
   activeSearchQuery: string | null;
+  proMode: "enabled" | "disabled";
 }
 
 export type PageAction =
@@ -61,6 +62,12 @@ export type PageAction =
       payload: {
         searchQuery: string | null;
       };
+    }
+  | {
+      type: "enableProMode";
+    }
+  | {
+      type: "disableProMode";
     };
 
 export type Task = {
