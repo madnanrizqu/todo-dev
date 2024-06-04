@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { P, match } from "ts-pattern";
 import { useIsFirstRender } from "./hooks/render";
@@ -41,16 +41,13 @@ const useAppIndex = () => {
         },
       ],
       parentTaskIdForCreate: null,
+      activeSearchQuery: null,
     }
   );
 
   const { tasks } = pageState;
 
   const isFirstRender = useIsFirstRender();
-
-  const [activeSearchQuery, setActiveSearchQuery] = useState<string | null>(
-    null
-  );
 
   const formCreate = useForm<{
     newTitle: string;
@@ -173,11 +170,17 @@ const useAppIndex = () => {
   };
 
   const handleSearchTask = (searchQuery: string) => {
-    setActiveSearchQuery(searchQuery.toLowerCase());
+    pageDispatch({
+      type: "setActiveSearchQuery",
+      payload: { searchQuery: searchQuery.toLowerCase() },
+    });
   };
 
   const handleResetSearch = () => {
-    setActiveSearchQuery(null);
+    pageDispatch({
+      type: "setActiveSearchQuery",
+      payload: { searchQuery: null },
+    });
   };
 
   useEffect(() => {
@@ -187,14 +190,17 @@ const useAppIndex = () => {
     const queryParamsSearch = queryParams.get("search");
     const queryParamsPrefix = "?";
 
-    match([queryParamsSearch, activeSearchQuery])
+    match([queryParamsSearch, pageState.activeSearchQuery])
       .with([P._, P.string], () => {
-        queryParams.set("search", activeSearchQuery as string);
+        queryParams.set("search", pageState.activeSearchQuery as string);
         history.pushState(null, "", queryParamsPrefix + queryParams.toString());
       })
       .with([P.string, P.nullish], () => {
         if (isFirstRender) {
-          setActiveSearchQuery(queryParams.get("search"));
+          pageDispatch({
+            type: "setActiveSearchQuery",
+            payload: { searchQuery: queryParams.get("search") },
+          });
         } else {
           history.pushState(null, "", "?search=");
         }
@@ -203,14 +209,20 @@ const useAppIndex = () => {
         history.pushState(null, "", "?search=");
       })
       .exhaustive();
-  }, [activeSearchQuery]);
+  }, [pageState.activeSearchQuery]);
 
-  const displayedTasks = activeSearchQuery
+  const displayedTasks = pageState.activeSearchQuery
     ? tasks.filter((task) => {
         return (
-          task.title.toLowerCase().search(activeSearchQuery) > -1 ||
+          task.title
+            .toLowerCase()
+            .search(pageState.activeSearchQuery as string) > -1 ||
           (task.subTasks?.findIndex((subTask) => {
-            return subTask.title.toLowerCase().search(activeSearchQuery) > -1;
+            return (
+              subTask.title
+                .toLowerCase()
+                .search(pageState.activeSearchQuery as string) > -1
+            );
           }) ?? -1) > -1
         );
       })
@@ -229,7 +241,7 @@ const useAppIndex = () => {
     onCreateSubTask,
     formCreate,
     formSearch,
-    activeSearchQuery,
+    activeSearchQuery: pageState.activeSearchQuery,
     parentTaskIdForCreate: pageState.parentTaskIdForCreate,
   };
 };
@@ -425,6 +437,11 @@ function pageReducer(state: PageState, action: PageAction): PageState {
       return {
         ...state,
         parentTaskIdForCreate: payload.parentId,
+      };
+    case "setActiveSearchQuery":
+      return {
+        ...state,
+        activeSearchQuery: payload.searchQuery,
       };
     default:
       return state;
