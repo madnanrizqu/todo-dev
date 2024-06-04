@@ -13,6 +13,8 @@ export const Task = (props: Props) => {
         "group transition-all border border-neutral rounded px-4 py-2 h-[49px] flex gap-2 items-center",
         {
           "hover:border-primary": props.variant === "notDone",
+          "active:border-primary": props.variant === "notDone",
+          "focus-within:border-primary": props.variant === "notDone",
           "opacity-40": props.variant === "done",
         }
       )}
