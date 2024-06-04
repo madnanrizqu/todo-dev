@@ -1,5 +1,6 @@
 export interface PageState {
   tasks: Task[];
+  parentTaskIdForCreate: string | null;
 }
 
 export type PageAction =
@@ -46,6 +47,12 @@ export type PageAction =
       payload: {
         taskId: string;
         parentId: string;
+      };
+    }
+  | {
+      type: "setParentIdForCreate";
+      payload: {
+        parentId: string | null;
       };
     };
 

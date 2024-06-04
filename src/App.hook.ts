@@ -40,6 +40,7 @@ const useAppIndex = () => {
           status: TaskStatus.NOT_DONE,
         },
       ],
+      parentTaskIdForCreate: null,
     }
   );
 
@@ -55,14 +56,13 @@ const useAppIndex = () => {
     newTitle: string;
   }>();
 
-  const [parentTaskIdForCreate, setParentTaskIdForCreate] = useState<
-    string | null
-  >(null);
-
   const formSearch = useForm<{ searchQuery: string }>();
 
   const onCreateSubTask = (parentTaskId: string) => {
-    setParentTaskIdForCreate(parentTaskId);
+    pageDispatch({
+      type: "setParentIdForCreate",
+      payload: { parentId: parentTaskId },
+    });
 
     const el = document.getElementById(
       `task-${parentTaskId}-sub-task-form-input`
@@ -72,17 +72,30 @@ const useAppIndex = () => {
   };
 
   const onCancelCreateSubTask = () => {
-    setParentTaskIdForCreate(null);
+    pageDispatch({
+      type: "setParentIdForCreate",
+      payload: {
+        parentId: null,
+      },
+    });
   };
 
   const handleCreateTask = (formValue: Task["title"]) => {
-    if (parentTaskIdForCreate) {
+    if (pageState.parentTaskIdForCreate) {
       pageDispatch({
         type: "appendSubTask",
-        payload: { newTitle: formValue, parentId: parentTaskIdForCreate },
+        payload: {
+          newTitle: formValue,
+          parentId: pageState.parentTaskIdForCreate,
+        },
       });
 
-      setParentTaskIdForCreate(null);
+      pageDispatch({
+        type: "setParentIdForCreate",
+        payload: {
+          parentId: null,
+        },
+      });
     } else {
       pageDispatch({ type: "appendTask", payload: { newTitle: formValue } });
     }
@@ -217,16 +230,17 @@ const useAppIndex = () => {
     formCreate,
     formSearch,
     activeSearchQuery,
-    parentTaskIdForCreate,
+    parentTaskIdForCreate: pageState.parentTaskIdForCreate,
   };
 };
 
-function pageReducer(state: PageState, action: PageAction) {
+function pageReducer(state: PageState, action: PageAction): PageState {
   const { type, payload } = action;
 
   switch (type) {
     case "appendTask":
       return {
+        ...state,
         tasks: [
           ...state.tasks,
           {
@@ -238,6 +252,7 @@ function pageReducer(state: PageState, action: PageAction) {
       };
     case "appendSubTask":
       return {
+        ...state,
         tasks: state.tasks.map((task) => {
           if (task.id === payload.parentId) {
             return {
@@ -266,6 +281,7 @@ function pageReducer(state: PageState, action: PageAction) {
       };
     case "toggleDoneStatusTask":
       return {
+        ...state,
         tasks: state.tasks.map((task) => {
           if (task.id === payload.taskId) {
             return {
@@ -282,6 +298,7 @@ function pageReducer(state: PageState, action: PageAction) {
       };
     case "toggleDoneStatusSubTask":
       return {
+        ...state,
         tasks: state.tasks.map((task) => {
           if (task.id === payload.parentId) {
             return {
@@ -307,6 +324,7 @@ function pageReducer(state: PageState, action: PageAction) {
       };
     case "toggleUpdateStatusTask":
       return {
+        ...state,
         tasks: state.tasks.map((task) => {
           if (task.id === payload.taskId) {
             return {
@@ -322,6 +340,7 @@ function pageReducer(state: PageState, action: PageAction) {
       };
     case "toggleUpdateStatusSubTask":
       return {
+        ...state,
         tasks: state.tasks.map((task) => {
           if (task.id === payload.parentId) {
             return {
@@ -346,6 +365,7 @@ function pageReducer(state: PageState, action: PageAction) {
       };
     case "updateTask":
       return {
+        ...state,
         tasks: state.tasks.map((task) => {
           if (task.id === payload.taskId) {
             return {
@@ -360,6 +380,7 @@ function pageReducer(state: PageState, action: PageAction) {
       };
     case "updateSubTask":
       return {
+        ...state,
         tasks: state.tasks.map((task) => {
           if (task.id === payload.parentId) {
             return {
@@ -383,10 +404,12 @@ function pageReducer(state: PageState, action: PageAction) {
       };
     case "deleteTask":
       return {
+        ...state,
         tasks: state.tasks.filter((v) => v.id !== payload.taskId),
       };
     case "deleteSubTask":
       return {
+        ...state,
         tasks: state.tasks.map((v) => {
           if (v.id === payload.parentId) {
             return {
@@ -397,6 +420,11 @@ function pageReducer(state: PageState, action: PageAction) {
             return v;
           }
         }),
+      };
+    case "setParentIdForCreate":
+      return {
+        ...state,
+        parentTaskIdForCreate: payload.parentId,
       };
     default:
       return state;
