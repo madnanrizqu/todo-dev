@@ -103,10 +103,9 @@ function App() {
 
           <ul className="space-y-4">
             {displayedTasks.map((task) => (
-              <li>
+              <li key={task.id}>
                 <TaskComponent
                   id={task.id}
-                  key={task.id}
                   title={task.title}
                   variant={mapStringToVariant(
                     match(task.status)
@@ -125,10 +124,9 @@ function App() {
                 />
                 <ul className="ml-10">
                   {task?.subTasks?.map((subTask) => (
-                    <li>
+                    <li key={subTask.id}>
                       <TaskComponent
                         id={subTask.id}
-                        key={subTask.id}
                         title={subTask.title}
                         variant={mapStringToVariant(
                           match(subTask.status)
