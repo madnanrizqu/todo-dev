@@ -14,6 +14,7 @@ export type Props = {
   onClickTriggerEdit?: () => void;
   onClickCancelEdit?: () => void;
   onClickAdd?: () => void;
+  disableKeyboardTab?: boolean;
 };
 
 type Variant = "done" | "notDone" | "inEdit" | "inCreate";

@@ -5,6 +5,7 @@ import { P, match } from "ts-pattern";
 import { Form, Props } from "./Task.model";
 
 export const Task = (props: Props) => {
+  const { disableKeyboardTab = false } = props;
   const form = useForm<Form>();
 
   return (
@@ -20,6 +21,7 @@ export const Task = (props: Props) => {
       )}
     >
       <button
+        tabIndex={disableKeyboardTab ? -1 : 0}
         className={clsx("border w-4 h-4 rounded-full", {
           "bg-white": props.variant === "done",
         })}
@@ -38,8 +40,9 @@ export const Task = (props: Props) => {
           Title
         </label>
         <input
-          tabIndex={match(props.variant)
-            .with(P.union("inCreate", "inEdit"), () => 0)
+          tabIndex={match([props.variant, disableKeyboardTab])
+            .with([P._, true], () => -1)
+            .with([P.union("inCreate", "inEdit"), false], () => 0)
             .otherwise(() => -1)}
           className="input input-sm input-bordered border w-full"
           id={`${props.id}-input`}
@@ -49,8 +52,9 @@ export const Task = (props: Props) => {
           })}
         />
         <button
-          tabIndex={match(props.variant)
-            .with(P.union("inCreate", "inEdit"), () => 0)
+          tabIndex={match([props.variant, disableKeyboardTab])
+            .with([P._, true], () => -1)
+            .with([P.union("inCreate", "inEdit"), false], () => 0)
             .otherwise(() => -1)}
           type="submit"
           className="hover:text-primary"
@@ -79,13 +83,21 @@ export const Task = (props: Props) => {
         )}
       >
         {props.variant !== "inCreate" && (
-          <button className="hover:text-primary" onClick={props.onClickDelete}>
+          <button
+            tabIndex={disableKeyboardTab ? -1 : 0}
+            className="hover:text-primary"
+            onClick={props.onClickDelete}
+          >
             <RxTrash />
           </button>
         )}
 
         {props.hasAddBtn && (
-          <button className="hover:text-primary" onClick={props.onClickAdd}>
+          <button
+            tabIndex={disableKeyboardTab ? -1 : 0}
+            className="hover:text-primary"
+            onClick={props.onClickAdd}
+          >
             <RxPlus />
           </button>
         )}
@@ -93,6 +105,7 @@ export const Task = (props: Props) => {
         {match(props.variant)
           .with(P.union("inEdit", "inCreate"), () => (
             <button
+              tabIndex={disableKeyboardTab ? -1 : 0}
               className="hover:text-primary"
               onClick={props.onClickCancelEdit}
             >
@@ -101,6 +114,7 @@ export const Task = (props: Props) => {
           ))
           .otherwise(() => (
             <button
+              tabIndex={disableKeyboardTab ? -1 : 0}
               className="hover:text-primary"
               onClick={() => {
                 props.onClickTriggerEdit?.();

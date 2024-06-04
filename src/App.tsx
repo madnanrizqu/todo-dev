@@ -163,6 +163,7 @@ function App() {
                     key={`task-${task.id}-sub-task-form`}
                   >
                     <TaskComponent
+                      disableKeyboardTab={parentTaskIdForCreate !== task.id}
                       id={`task-${task.id}-sub-task-form`}
                       variant="inCreate"
                       onSubmitEdit={handleCreateTask}
