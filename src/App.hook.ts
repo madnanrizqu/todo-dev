@@ -302,6 +302,15 @@ function pageReducer(state: PageState, action: PageAction): PageState {
                 .with(TaskStatus.DONE, () => TaskStatus.NOT_DONE)
                 .with(TaskStatus.NOT_DONE, () => TaskStatus.DONE)
                 .run(),
+              subTasks: task.subTasks
+                ? task.subTasks.map((subTask) => ({
+                    ...subTask,
+                    status: match(task.status)
+                      .with(TaskStatus.DONE, () => TaskStatus.NOT_DONE)
+                      .with(TaskStatus.NOT_DONE, () => TaskStatus.DONE)
+                      .run(),
+                  }))
+                : [],
             };
           } else {
             return task;
