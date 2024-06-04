@@ -22,9 +22,15 @@ export const Task = (props: Props) => {
     >
       <button
         tabIndex={disableKeyboardTab ? -1 : 0}
-        className={clsx("border w-4 h-4 rounded-full", {
-          "bg-white": props.variant === "done",
-        })}
+        className={clsx(
+          "transition-all border w-4 h-4 rounded-full",
+          {
+            "bg-white": props.variant === "done",
+          },
+          "hover:bg-primary",
+          "focus:bg-primary",
+          "active:bg-primary"
+        )}
         onClick={props.onClickToggle}
       />
 
