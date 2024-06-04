@@ -6,9 +6,9 @@ import { RxMagnifyingGlass } from "react-icons/rx";
 import { RxCheck } from "react-icons/rx";
 import { RxCross2 } from "react-icons/rx";
 import { useIsFirstRender } from "./hooks/render";
-import { useLocalStorageState } from "./hooks/storage";
 import { Task as TaskComponent, mapStringToVariant } from "./components/Task";
 import { v4 as uuidv4 } from "uuid";
+import { useLocalStorageReducer } from "./hooks/storage";
 
 export type Task = {
   id: string;
@@ -23,36 +23,276 @@ export enum TaskStatus {
   IN_EDIT = "inEdit",
 }
 
+interface PageState {
+  tasks: Task[];
+}
+
+type PageAction =
+  | {
+      type: "appendTask";
+      payload: { newTitle: string };
+    }
+  | {
+      type: "appendSubTask";
+      payload: { newTitle: string; parentId: string };
+    }
+  | {
+      type: "toggleDoneNotDoneTask";
+      payload: { taskId: string };
+    }
+  | {
+      type: "toggleDoneNotDoneSubTask";
+      payload: { taskId: string; parentId: string };
+    }
+  | {
+      type: "toggleUpdateStatusTask";
+      payload: { taskId: string };
+    }
+  | {
+      type: "toggleUpdateStatusSubTask";
+      payload: { taskId: string; parentId: string };
+    }
+  | {
+      type: "updateSubTask";
+      payload: { taskId: string; parentId: string; newTitle: string };
+    }
+  | {
+      type: "updateTask";
+      payload: { taskId: string; newTitle: string };
+    }
+  | {
+      type: "deleteTask";
+      payload: {
+        taskId: string;
+      };
+    }
+  | {
+      type: "deleteSubTask";
+      payload: {
+        taskId: string;
+        parentId: string;
+      };
+    };
+
+function pageReducer(state: PageState, action: PageAction) {
+  const { type, payload } = action;
+  switch (type) {
+    case "appendTask":
+      return {
+        tasks: [
+          ...state.tasks,
+          {
+            id: uuidv4(),
+            title: payload.newTitle,
+            status: TaskStatus.NOT_DONE,
+          },
+        ],
+      };
+    case "appendSubTask":
+      return {
+        tasks: state.tasks.map((task) => {
+          if (task.id === payload.parentId) {
+            return {
+              ...task,
+              subTasks: task.subTasks
+                ? [
+                    ...task.subTasks,
+                    {
+                      id: uuidv4(),
+                      title: payload.newTitle,
+                      status: TaskStatus.NOT_DONE,
+                    },
+                  ]
+                : [
+                    {
+                      id: uuidv4(),
+                      title: payload.newTitle,
+                      status: TaskStatus.NOT_DONE,
+                    },
+                  ],
+            };
+          } else {
+            return task;
+          }
+        }),
+      };
+    case "toggleDoneNotDoneTask":
+      return {
+        tasks: state.tasks.map((task) => {
+          if (task.id === payload.taskId) {
+            return {
+              ...task,
+              status: match(task.status)
+                .with(TaskStatus.DONE, () => TaskStatus.NOT_DONE)
+                .with(TaskStatus.NOT_DONE, () => TaskStatus.DONE)
+                .run(),
+            };
+          } else {
+            return task;
+          }
+        }),
+      };
+    case "toggleDoneNotDoneSubTask":
+      return {
+        tasks: state.tasks.map((task) => {
+          if (task.id === payload.parentId) {
+            return {
+              ...task,
+              subTasks: task?.subTasks?.map((subTask) => {
+                if (subTask.id === payload.taskId) {
+                  return {
+                    ...subTask,
+                    status: match(subTask.status)
+                      .with(TaskStatus.DONE, () => TaskStatus.NOT_DONE)
+                      .with(TaskStatus.NOT_DONE, () => TaskStatus.DONE)
+                      .run(),
+                  };
+                } else {
+                  return subTask;
+                }
+              }),
+            };
+          } else {
+            return task;
+          }
+        }),
+      };
+    case "toggleUpdateStatusTask":
+      return {
+        tasks: state.tasks.map((task) => {
+          if (task.id === payload.taskId) {
+            return {
+              ...task,
+              status: match(task.status)
+                .with(TaskStatus.IN_EDIT, () => TaskStatus.NOT_DONE)
+                .otherwise(() => TaskStatus.IN_EDIT),
+            };
+          } else {
+            return task;
+          }
+        }),
+      };
+    case "toggleUpdateStatusSubTask":
+      return {
+        tasks: state.tasks.map((task) => {
+          if (task.id === payload.parentId) {
+            return {
+              ...task,
+              subTasks: task.subTasks?.map((v) => {
+                if (v.id === payload.taskId) {
+                  return {
+                    ...v,
+                    status: match(v.status)
+                      .with(TaskStatus.IN_EDIT, () => TaskStatus.NOT_DONE)
+                      .otherwise(() => TaskStatus.IN_EDIT),
+                  };
+                } else {
+                  return v;
+                }
+              }),
+            };
+          } else {
+            return task;
+          }
+        }),
+      };
+    case "updateTask":
+      return {
+        tasks: state.tasks.map((task) => {
+          if (task.id === payload.taskId) {
+            return {
+              ...task,
+              title: payload.newTitle,
+              status: TaskStatus.NOT_DONE,
+            };
+          } else {
+            return task;
+          }
+        }),
+      };
+    case "updateSubTask":
+      return {
+        tasks: state.tasks.map((task) => {
+          if (task.id === payload.parentId) {
+            return {
+              ...task,
+              subTasks: task.subTasks?.map((v) => {
+                if (v.id === payload.taskId) {
+                  return {
+                    ...v,
+                    title: payload.newTitle,
+                    status: TaskStatus.NOT_DONE,
+                  };
+                } else {
+                  return v;
+                }
+              }),
+            };
+          } else {
+            return task;
+          }
+        }),
+      };
+    case "deleteTask":
+      return {
+        tasks: state.tasks.filter((v) => v.id !== payload.taskId),
+      };
+    case "deleteSubTask":
+      return {
+        tasks: state.tasks.map((v) => {
+          if (v.id === payload.parentId) {
+            return {
+              ...v,
+              subTasks: v.subTasks?.filter((s) => s.id !== payload.taskId),
+            };
+          } else {
+            return v;
+          }
+        }),
+      };
+    default:
+      return state;
+  }
+}
+
 function App() {
-  const [tasks, setTasks] = useLocalStorageState<Task[]>("app.tasks", [
+  const [pageState, pageDispatch] = useLocalStorageReducer(
+    "state",
+    pageReducer,
     {
-      id: uuidv4(),
-      title: "Todo.dev",
-      status: TaskStatus.NOT_DONE,
-      subTasks: [
+      tasks: [
         {
           id: uuidv4(),
-          title: "child task",
+          title: "Todo.dev",
           status: TaskStatus.NOT_DONE,
+          subTasks: [
+            {
+              id: uuidv4(),
+              title: "child task",
+              status: TaskStatus.NOT_DONE,
+            },
+            {
+              id: uuidv4(),
+              title: "keyboard accessibility",
+              status: TaskStatus.NOT_DONE,
+            },
+            {
+              id: uuidv4(),
+              title: "command pallete",
+              status: TaskStatus.NOT_DONE,
+            },
+          ],
         },
         {
           id: uuidv4(),
-          title: "keyboard accessibility",
-          status: TaskStatus.NOT_DONE,
-        },
-        {
-          id: uuidv4(),
-          title: "command pallete",
+          title: "think 5k project",
           status: TaskStatus.NOT_DONE,
         },
       ],
-    },
-    {
-      id: uuidv4(),
-      title: "think 5k project",
-      status: TaskStatus.NOT_DONE,
-    },
-  ]);
+    }
+  );
+
+  const { tasks } = pageState;
 
   const isFirstRender = useIsFirstRender();
 
@@ -87,112 +327,42 @@ function App() {
 
   const handleCreateTask = (formValue: Task["title"]) => {
     if (parentTaskIdForCreate) {
-      setTasks((prev) => {
-        return prev.map((task) => {
-          if (task.id === parentTaskIdForCreate) {
-            return {
-              ...task,
-              subTasks: [
-                ...(task?.subTasks?.length
-                  ? [
-                      ...task.subTasks,
-                      {
-                        id: uuidv4(),
-                        title: formValue,
-                        status: TaskStatus.NOT_DONE,
-                      },
-                    ]
-                  : [
-                      {
-                        id: uuidv4(),
-                        title: formValue,
-                        status: TaskStatus.NOT_DONE,
-                      },
-                    ]),
-              ],
-            };
-          } else {
-            return task;
-          }
-        });
+      pageDispatch({
+        type: "appendSubTask",
+        payload: { newTitle: formValue, parentId: parentTaskIdForCreate },
       });
 
       setParentTaskIdForCreate(null);
     } else {
-      setTasks((prev) => [
-        ...prev,
-        {
-          id: uuidv4(),
-          title: formValue,
-          status: TaskStatus.NOT_DONE,
-        },
-      ]);
+      pageDispatch({ type: "appendTask", payload: { newTitle: formValue } });
     }
 
     formCreate.setValue("newTitle", "");
   };
 
-  const handleToggleTask = (taskId: string) => {
-    const toggleTaskStatus = (task: Task): Task => {
-      if (task.subTasks) {
-        task.subTasks = [...task.subTasks.map(toggleTaskStatus)];
-      }
-
-      if (task.id === taskId) {
-        return {
-          ...task,
-          status: match(task.status)
-            .with(TaskStatus.DONE, () => TaskStatus.NOT_DONE)
-            .with(TaskStatus.NOT_DONE, () => TaskStatus.DONE)
-            .run(),
-        };
-      } else {
-        return task;
-      }
-    };
-
-    setTasks((prev) => prev.map(toggleTaskStatus));
+  const handleToggleTask = (taskId: string, parentId?: string) => {
+    if (parentId) {
+      pageDispatch({
+        type: "toggleDoneNotDoneSubTask",
+        payload: { taskId, parentId },
+      });
+    } else {
+      pageDispatch({ type: "toggleDoneNotDoneTask", payload: { taskId } });
+    }
   };
 
   const toggleTriggerUpdateTask = (taskId: string, parentId?: string) => {
-    setTasks((prev) => {
-      if (parentId) {
-        return prev.map((task) => {
-          if (task.id === parentId) {
-            return {
-              ...task,
-              subTasks: task.subTasks?.map((v) => {
-                if (v.id === taskId) {
-                  return {
-                    ...v,
-                    status: match(v.status)
-                      .with(TaskStatus.IN_EDIT, () => TaskStatus.NOT_DONE)
-                      .otherwise(() => TaskStatus.IN_EDIT),
-                  };
-                } else {
-                  return v;
-                }
-              }),
-            };
-          } else {
-            return task;
-          }
-        });
-      } else {
-        return prev.map((task) => {
-          if (task.id === taskId) {
-            return {
-              ...task,
-              status: match(task.status)
-                .with(TaskStatus.IN_EDIT, () => TaskStatus.NOT_DONE)
-                .otherwise(() => TaskStatus.IN_EDIT),
-            };
-          } else {
-            return task;
-          }
-        });
-      }
-    });
+    if (parentId) {
+      pageDispatch({
+        type: "toggleUpdateStatusSubTask",
+        payload: { taskId, parentId },
+      });
+    } else {
+      pageDispatch({
+        type: "toggleUpdateStatusTask",
+        payload: { taskId },
+      });
+    }
   };
 
   const handleUpdateTask = (
@@ -200,60 +370,42 @@ function App() {
     taskId: string,
     parentId?: string
   ) => {
-    setTasks((prev) => {
-      if (parentId) {
-        return prev.map((task) => {
-          if (task.id === parentId) {
-            return {
-              ...task,
-              subTasks: task.subTasks?.map((v) => {
-                if (v.id === taskId) {
-                  return {
-                    ...v,
-                    title: updatedTitle,
-                    status: TaskStatus.NOT_DONE,
-                  };
-                } else {
-                  return v;
-                }
-              }),
-            };
-          } else {
-            return task;
-          }
-        });
-      } else {
-        return prev.map((task) => {
-          if (task.id === taskId) {
-            return {
-              ...task,
-              title: updatedTitle,
-              status: TaskStatus.NOT_DONE,
-            };
-          } else {
-            return task;
-          }
-        });
-      }
-    });
+    if (parentId) {
+      pageDispatch({
+        type: "updateSubTask",
+        payload: {
+          newTitle: updatedTitle,
+          taskId,
+          parentId,
+        },
+      });
+    } else {
+      pageDispatch({
+        type: "updateTask",
+        payload: {
+          newTitle: updatedTitle,
+          taskId,
+        },
+      });
+    }
   };
 
   const handleDeleteTask = (taskId: string, parentId?: string) => {
     if (parentId) {
-      setTasks((prev) =>
-        prev.map((v) => {
-          if (v.id === parentId) {
-            return {
-              ...v,
-              subTasks: v.subTasks?.filter((s) => s.id !== taskId),
-            };
-          } else {
-            return v;
-          }
-        })
-      );
+      pageDispatch({
+        type: "deleteSubTask",
+        payload: {
+          taskId,
+          parentId,
+        },
+      });
     } else {
-      setTasks((prev) => prev.filter((v) => v.id !== taskId));
+      pageDispatch({
+        type: "deleteTask",
+        payload: {
+          taskId,
+        },
+      });
     }
   };
 
@@ -422,7 +574,9 @@ function App() {
                         onSubmitEdit={(value) =>
                           handleUpdateTask(value, subTask.id, task.id)
                         }
-                        onClickToggle={() => handleToggleTask(subTask.id)}
+                        onClickToggle={() =>
+                          handleToggleTask(subTask.id, task.id)
+                        }
                         onClickDelete={() =>
                           handleDeleteTask(subTask.id, task.id)
                         }
