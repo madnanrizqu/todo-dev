@@ -1,7 +1,6 @@
 export interface PageState {
   tasks: Task[];
   parentTaskIdForCreate: string | null;
-  activeSearchQuery: string | null;
   proMode: "enabled" | "disabled";
 }
 
@@ -55,12 +54,6 @@ export type PageAction =
       type: "setParentIdForCreate";
       payload: {
         parentId: string | null;
-      };
-    }
-  | {
-      type: "setActiveSearchQuery";
-      payload: {
-        searchQuery: string | null;
       };
     }
   | {

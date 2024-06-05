@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { P, match } from "ts-pattern";
 import { useIsFirstRender } from "./hooks/render";
@@ -41,7 +41,6 @@ const useAppIndex = () => {
         },
       ],
       parentTaskIdForCreate: null,
-      activeSearchQuery: null,
       proMode: "enabled",
     }
   );
@@ -49,6 +48,10 @@ const useAppIndex = () => {
   const { tasks } = pageState;
 
   const isFirstRender = useIsFirstRender();
+
+  const [activeSearchQuery, setActiveSearchQuery] = useState<string | null>(
+    null
+  );
 
   const formCreate = useForm<{
     newTitle: string;
@@ -171,17 +174,11 @@ const useAppIndex = () => {
   };
 
   const handleSearchTask = (searchQuery: string) => {
-    pageDispatch({
-      type: "setActiveSearchQuery",
-      payload: { searchQuery: searchQuery.toLowerCase() },
-    });
+    setActiveSearchQuery(searchQuery.toLowerCase());
   };
 
   const handleResetSearch = () => {
-    pageDispatch({
-      type: "setActiveSearchQuery",
-      payload: { searchQuery: null },
-    });
+    setActiveSearchQuery(null);
   };
 
   const handleProModeChange = () => {
@@ -198,17 +195,14 @@ const useAppIndex = () => {
     const queryParamsSearch = queryParams.get("search");
     const queryParamsPrefix = "?";
 
-    match([queryParamsSearch, pageState.activeSearchQuery])
+    match([queryParamsSearch, activeSearchQuery])
       .with([P._, P.string], () => {
-        queryParams.set("search", pageState.activeSearchQuery as string);
+        queryParams.set("search", activeSearchQuery as string);
         history.pushState(null, "", queryParamsPrefix + queryParams.toString());
       })
       .with([P.string, P.nullish], () => {
         if (isFirstRender) {
-          pageDispatch({
-            type: "setActiveSearchQuery",
-            payload: { searchQuery: queryParams.get("search") },
-          });
+          setActiveSearchQuery(queryParams.get("search"));
         } else {
           history.pushState(null, "", "?search=");
         }
@@ -217,20 +211,14 @@ const useAppIndex = () => {
         history.pushState(null, "", "?search=");
       })
       .exhaustive();
-  }, [pageState.activeSearchQuery]);
+  }, [activeSearchQuery]);
 
-  const displayedTasks = pageState.activeSearchQuery
+  const displayedTasks = activeSearchQuery
     ? tasks.filter((task) => {
         return (
-          task.title
-            .toLowerCase()
-            .search(pageState.activeSearchQuery as string) > -1 ||
+          task.title.toLowerCase().search(activeSearchQuery) > -1 ||
           (task.subTasks?.findIndex((subTask) => {
-            return (
-              subTask.title
-                .toLowerCase()
-                .search(pageState.activeSearchQuery as string) > -1
-            );
+            return subTask.title.toLowerCase().search(activeSearchQuery) > -1;
           }) ?? -1) > -1
         );
       })
@@ -249,7 +237,7 @@ const useAppIndex = () => {
     handleProModeChange,
     formCreate,
     formSearch,
-    activeSearchQuery: pageState.activeSearchQuery,
+    activeSearchQuery,
     parentTaskIdForCreate: pageState.parentTaskIdForCreate,
     displayedTasks,
     isProMode: pageState.proMode === "enabled",
@@ -458,11 +446,6 @@ function pageReducer(state: PageState, action: PageAction): PageState {
       return {
         ...state,
         parentTaskIdForCreate: action.payload.parentId,
-      };
-    case "setActiveSearchQuery":
-      return {
-        ...state,
-        activeSearchQuery: action.payload.searchQuery,
       };
     case "enableProMode":
       return {
