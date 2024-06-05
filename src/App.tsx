@@ -14,7 +14,7 @@ function App() {
     displayedTasks,
     activeSearchQuery,
     parentTaskIdForCreate,
-    proMode,
+    isProMode,
     handleCreateTask,
     handleDeleteTask,
     handleResetSearch,
@@ -38,7 +38,7 @@ function App() {
             <input
               type="checkbox"
               className="toggle toggle-primary"
-              checked={proMode === "enabled"}
+              checked={isProMode}
               onChange={handleProModeChange}
             />
           </label>
@@ -47,10 +47,10 @@ function App() {
 
       <div
         className={clsx("space-y-16 relative", {
-          "cursor-not-allowed": proMode === "enabled",
+          "cursor-not-allowed": isProMode,
         })}
       >
-        {proMode === "enabled" && (
+        {isProMode && (
           <div className="absolute inset-0 cursor-not-allowed z-10"></div>
         )}
         <form

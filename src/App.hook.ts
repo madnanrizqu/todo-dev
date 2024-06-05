@@ -252,7 +252,7 @@ const useAppIndex = () => {
     activeSearchQuery: pageState.activeSearchQuery,
     parentTaskIdForCreate: pageState.parentTaskIdForCreate,
     displayedTasks,
-    proMode: pageState.proMode,
+    isProMode: pageState.proMode === "enabled",
   };
 };
 
