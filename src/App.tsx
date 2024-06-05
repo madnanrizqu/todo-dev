@@ -46,7 +46,7 @@ function App() {
       </header>
 
       <div
-        className={clsx("space-y-4 relative", {
+        className={clsx("space-y-8 relative", {
           "cursor-not-allowed": isProMode,
         })}
       >
