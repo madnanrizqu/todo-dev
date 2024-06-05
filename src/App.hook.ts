@@ -45,8 +45,6 @@ const useAppIndex = () => {
     }
   );
 
-  const { tasks } = pageState;
-
   const isFirstRender = useIsFirstRender();
 
   const [activeSearchQuery, setActiveSearchQuery] = useState<string | null>(
@@ -214,7 +212,7 @@ const useAppIndex = () => {
   }, [activeSearchQuery]);
 
   const displayedTasks = activeSearchQuery
-    ? tasks.filter((task) => {
+    ? pageState.tasks.filter((task) => {
         return (
           task.title.toLowerCase().search(activeSearchQuery) > -1 ||
           (task.subTasks?.findIndex((subTask) => {
@@ -222,7 +220,7 @@ const useAppIndex = () => {
           }) ?? -1) > -1
         );
       })
-    : tasks;
+    : pageState.tasks;
 
   return {
     handleCreateTask,
