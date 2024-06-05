@@ -45,6 +45,22 @@ function App() {
         </form>
       </header>
 
+      <dialog id="greetModal" className="modal">
+        <div className="modal-box">
+          <p className="font-bold text-lg">Todo.dev</p>
+          <p className="py-4">
+            Welcome to todo.dev. This app forces you to only use keyboard for
+            managing tasks! Disable this behaviour by clicking the "Pro Mode"
+            radio button
+          </p>
+          <div className="modal-action">
+            <form method="dialog">
+              <button className="btn">Got It</button>
+            </form>
+          </div>
+        </div>
+      </dialog>
+
       <div
         className={clsx("space-y-8 relative", {
           "cursor-not-allowed": isProMode,

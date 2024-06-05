@@ -211,6 +211,13 @@ const useAppIndex = () => {
       .exhaustive();
   }, [activeSearchQuery]);
 
+  useEffect(() => {
+    if (isFirstRender) {
+      // @ts-expect-error showModal exists from daisy ui
+      document.getElementById("greetModal")?.showModal();
+    }
+  }, [isFirstRender]);
+
   const displayedTasks = activeSearchQuery
     ? pageState.tasks.filter((task) => {
         return (
